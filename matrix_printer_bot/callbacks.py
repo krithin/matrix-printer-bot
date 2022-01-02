@@ -12,7 +12,7 @@ from nio import (
 )
 
 from matrix_printer_bot.bot_commands import Command
-from matrix_printer_bot.chat_functions import make_pill, react_to_event, send_text_to_room
+from matrix_printer_bot.chat_functions import make_pill, react_to_event, send_text_to_room, user_homeserver
 from matrix_printer_bot.config import Config
 from matrix_printer_bot.message_responses import Message
 from matrix_printer_bot.storage import Storage
@@ -52,7 +52,7 @@ class Callbacks:
 
         logger.debug(
             f"Bot message received for room {room.display_name} | "
-            f"{room.user_name(event.sender)}: {msg}"
+            f"{room.user_name(event.sender)} ({event.sender}): {msg}"
         )
 
         # Process as message if in a public room without command prefix
@@ -87,22 +87,24 @@ class Callbacks:
         """
         logger.debug(f"Got invite to {room.room_id} from {event.sender}.")
 
-        # Attempt to join 3 times before giving up
-        for attempt in range(3):
-            result = await self.client.join(room.room_id)
-            if type(result) == JoinError:
-                logger.error(
-                    f"Error joining room {room.room_id} (attempt %d): %s",
-                    attempt,
-                    result.message,
-                )
+        # Only autoaccept invites from users on the same homeserver as us.
+        if user_homeserver(event.sender) == user_homeserver(self.config.user_id):
+            # Attempt to join 3 times before giving up
+            for attempt in range(3):
+                result = await self.client.join(room.room_id)
+                if type(result) == JoinError:
+                    logger.error(
+                        f"Error joining room {room.room_id} (attempt %d): %s",
+                        attempt,
+                        result.message,
+                    )
+                else:
+                    break
             else:
-                break
-        else:
-            logger.error("Unable to join room: %s", room.room_id)
+                logger.error("Unable to join room: %s", room.room_id)
 
-        # Successfully joined room
-        logger.info(f"Joined {room.room_id}")
+            # Successfully joined room
+            logger.info(f"Joined {room.room_id}")
 
     async def invite_event_filtered_callback(
         self, room: MatrixRoom, event: InviteMemberEvent

@@ -1,8 +1,8 @@
 from nio import AsyncClient, MatrixRoom, RoomMessageText
 
-from my_project_name.chat_functions import react_to_event, send_text_to_room
-from my_project_name.config import Config
-from my_project_name.storage import Storage
+from matrix_printer_bot.chat_functions import react_to_event, send_text_to_room
+from matrix_printer_bot.config import Config
+from matrix_printer_bot.storage import Storage
 
 
 class Command:

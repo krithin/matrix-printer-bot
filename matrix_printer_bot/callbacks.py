@@ -1,3 +1,4 @@
+from typing import Union
 import logging
 
 from nio import (
@@ -7,6 +8,8 @@ from nio import (
     MatrixRoom,
     MegolmEvent,
     RoomGetEventError,
+    RoomEncryptedFile,
+    RoomMessageFile,
     RoomMessageText,
     UnknownEvent,
 )
@@ -14,6 +17,7 @@ from nio import (
 from matrix_printer_bot.bot_commands import Command
 from matrix_printer_bot.chat_functions import make_pill, react_to_event, send_text_to_room, user_homeserver
 from matrix_printer_bot.config import Config
+from matrix_printer_bot.file_hander import UploadedFile
 from matrix_printer_bot.message_responses import Message
 from matrix_printer_bot.storage import Storage
 
@@ -35,7 +39,7 @@ class Callbacks:
         self.config = config
         self.command_prefix = config.command_prefix
 
-    async def message(self, room: MatrixRoom, event: RoomMessageText) -> None:
+    async def message(self, room: MatrixRoom, event: Union[RoomMessageText, RoomMessageFile, RoomEncryptedFile]) -> None:
         """Callback for when a message event is received
 
         Args:
@@ -51,9 +55,15 @@ class Callbacks:
             return
 
         logger.debug(
-            f"Bot message received for room {room.display_name} | "
-            f"{room.user_name(event.sender)} ({event.sender}): {msg}"
+            "Bot message received for room %s | %s (%s): %s",
+            room.display_name, room.user_name(event.sender), event.sender, msg
         )
+
+        # Process as a file to be (possibly) printed if sent in a DM
+        if room.member_count == 2 and hasattr(event, "url"):
+            file = UploadedFile(self.client, self.store, self.config, msg, room, event)
+            await file.process()
+            return
 
         # Process as message if in a public room without command prefix
         has_command_prefix = msg.startswith(self.command_prefix)

@@ -70,8 +70,9 @@ class Command:
 
     async def _show_help(self):
         """Show the help text"""
-        text = ("Hello, I am a bot made with matrix-nio! I can help you print stuff. "
-                "Send me a PDF and I'll take care of the rest"
+        text = (
+            "Hello, I am a bot made with matrix-nio! I can help you print stuff. "
+            "Send me a PDF and I'll take care of the rest."
         )
         await send_text_to_room(self.client, self.room.room_id, text)
 

@@ -1,15 +1,16 @@
-from typing import Union
 import asyncio
 import logging
+from typing import Union
 from urllib.parse import urlparse
 
-from nio import AsyncClient, MatrixRoom, RoomMessageFile, RoomEncryptedFile
 import nio.crypto
+from nio import AsyncClient, MatrixRoom, RoomEncryptedFile, RoomMessageFile
 
 from matrix_printer_bot.config import Config
 from matrix_printer_bot.storage import Storage
 
 logger = logging.getLogger(__name__)
+
 
 class UploadedFile:
     def __init__(
@@ -36,7 +37,9 @@ class UploadedFile:
 
         file_size_bytes = self.event.source["content"]["info"]["size"]
         if file_size_bytes is None or file_size_bytes > 10_000_000:
-            logger.info("Skipping %s because it's too large: %d", self.filename, file_size_bytes)
+            logger.info(
+                "Skipping %s because it's too large: %d", self.filename, file_size_bytes
+            )
             return
 
         url = urlparse(self.event.url)
@@ -44,7 +47,7 @@ class UploadedFile:
             url.hostname,
             url.path[1:],  # Strip the leading '/'
             self.filename,
-            allow_remote=False
+            allow_remote=False,
         )
         logger.debug(response)
 
@@ -56,7 +59,9 @@ class UploadedFile:
                 "hash": self.event.hashes["sha256"],
                 "iv": self.event.iv,
             }
-            decrypted_content = nio.crypto.decrypt_attachment(response.body, **decryption_keys)
+            decrypted_content = nio.crypto.decrypt_attachment(
+                response.body, **decryption_keys
+            )
         else:
             decrypted_content = response.body
 
@@ -67,6 +72,11 @@ class UploadedFile:
 
         stdout, stderr = await proc.communicate(decrypted_content)
         if stderr:
-            logger.error("Error printing file %s.\nStdout %s\nStderr %s", self.filename, stdout, stderr)
+            logger.error(
+                "Error printing file %s.\nStdout %s\nStderr %s",
+                self.filename,
+                stdout,
+                stderr,
+            )
         else:
             logger.debug("Printed file %s. Stdout %s", self.filename, stdout)

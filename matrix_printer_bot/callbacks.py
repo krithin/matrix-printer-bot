@@ -1,5 +1,5 @@
-from typing import Union
 import logging
+from typing import Union
 
 from nio import (
     AsyncClient,
@@ -7,15 +7,20 @@ from nio import (
     JoinError,
     MatrixRoom,
     MegolmEvent,
-    RoomGetEventError,
     RoomEncryptedFile,
+    RoomGetEventError,
     RoomMessageFile,
     RoomMessageText,
     UnknownEvent,
 )
 
 from matrix_printer_bot.bot_commands import Command
-from matrix_printer_bot.chat_functions import make_pill, react_to_event, send_text_to_room, user_homeserver
+from matrix_printer_bot.chat_functions import (
+    make_pill,
+    react_to_event,
+    send_text_to_room,
+    user_homeserver,
+)
 from matrix_printer_bot.config import Config
 from matrix_printer_bot.file_hander import UploadedFile
 from matrix_printer_bot.message_responses import Message
@@ -39,7 +44,11 @@ class Callbacks:
         self.config = config
         self.command_prefix = config.command_prefix
 
-    async def message(self, room: MatrixRoom, event: Union[RoomMessageText, RoomMessageFile, RoomEncryptedFile]) -> None:
+    async def message(
+        self,
+        room: MatrixRoom,
+        event: Union[RoomMessageText, RoomMessageFile, RoomEncryptedFile],
+    ) -> None:
         """Callback for when a message event is received
 
         Args:
@@ -56,7 +65,10 @@ class Callbacks:
 
         logger.debug(
             "Bot message received for room %s | %s (%s): %s",
-            room.display_name, room.user_name(event.sender), event.sender, msg
+            room.display_name,
+            room.user_name(event.sender),
+            event.sender,
+            msg,
         )
 
         # Process as a file to be (possibly) printed if sent in a DM

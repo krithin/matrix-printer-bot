@@ -92,7 +92,7 @@ def make_pill(user_id: str, displayname: str = None) -> str:
 
 def user_homeserver(user_id: str) -> str:
     """Return just the homeserver part of a user's MXID"""
-    return user_id.rpartition(':')[-1]
+    return user_id.rpartition(":")[-1]
 
 
 async def react_to_event(

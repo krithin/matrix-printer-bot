@@ -64,7 +64,9 @@ async def main():
 
     # Set up event callbacks
     callbacks = Callbacks(client, store, config)
-    client.add_event_callback(callbacks.message, (RoomMessageText, RoomMessageFile, RoomEncryptedFile))
+    client.add_event_callback(
+        callbacks.message, (RoomMessageText, RoomMessageFile, RoomEncryptedFile)
+    )
     client.add_event_callback(
         callbacks.invite_event_filtered_callback, (InviteMemberEvent,)
     )

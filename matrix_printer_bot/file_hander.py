@@ -4,6 +4,7 @@ import logging
 from urllib.parse import urlparse
 
 from nio import AsyncClient, MatrixRoom, RoomMessageFile, RoomEncryptedFile
+import nio.crypto
 
 from matrix_printer_bot.config import Config
 from matrix_printer_bot.storage import Storage
@@ -42,19 +43,29 @@ class UploadedFile:
         response = await self.client.download(
             url.hostname,
             url.path[1:],  # Strip the leading '/'
+            self.filename,
             allow_remote=False
         )
         logger.debug(response)
 
-        with open(self.filename, 'w') as o:
-            o.write(str(response.body))
+        if hasattr(self.event, "key"):
+            # We got an encrypted event
+            logger.debug("About to decrypt file %s", self.filename)
+            decryption_keys = {
+                "key": self.event.key["k"],
+                "hash": self.event.hashes["sha256"],
+                "iv": self.event.iv,
+            }
+            decrypted_content = nio.crypto.decrypt_attachment(response.body, **decryption_keys)
+        else:
+            decrypted_content = response.body
 
         PIPE = asyncio.subprocess.PIPE
         proc = await asyncio.create_subprocess_exec(
             "/usr/bin/lp", "-d", "MFC-1910W", stdin=PIPE, stdout=PIPE, stderr=PIPE
         )
 
-        stdout, stderr = await proc.communicate(response.body)
+        stdout, stderr = await proc.communicate(decrypted_content)
         if stderr:
             logger.error("Error printing file %s.\nStdout %s\nStderr %s", self.filename, stdout, stderr)
         else:
